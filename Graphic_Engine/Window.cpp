@@ -1,7 +1,40 @@
 #include "Window.h"
 
+
+Window* window = nullptr;
+
 Window::Window()
+    : m_hwnd(NULL)
 {
+}
+
+LRESULT CALLBACK WndProc(HWND hwnd,UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_CREATE:
+    {
+        //this event gets fired when the window is created
+        window->onCreate();
+
+        break;
+    }
+    case WM_DESTROY:
+    {
+        //this event gets fired when the window get destroy
+        window->onDestroy();
+
+        ::PostQuitMessage(0);
+        break;
+
+    }
+
+    default :
+        return ::DefWindowProc(hwnd, msg, wparam, lparam);
+    }
+
+    return NULL;
+
 }
 
 bool Window::init()
@@ -18,6 +51,8 @@ bool Window::init()
     wc.lpszClassName = L"MyWindowClass";
     wc.lpszMenuName = NULL;
     wc.style = NULL;
+    wc.lpfnWndProc = &WndProc;
+
     if (!::RegisterClassEx(&wc))
         return false;
 
@@ -35,7 +70,14 @@ bool Window::init()
     ::ShowWindow(m_hwnd, SW_SHOW);
     ::UpdateWindow(m_hwnd);
 
+    if (!window)
+        window = this;
 
+    return true;
+}
+
+bool Window::broadcast()
+{
     return true;
 }
 
