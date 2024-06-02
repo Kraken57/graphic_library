@@ -4,7 +4,7 @@
 Window* window = nullptr;
 
 Window::Window()
-    : m_hwnd(NULL)
+    : m_hwnd(NULL), m_is_run(false)
 {
 }
 
@@ -56,9 +56,13 @@ bool Window::init()
     if (!::RegisterClassEx(&wc))
         return false;
 
+    //call this pointer before the creation of the window so that it does not show null
+    if (!window)
+        window = this;
+
 
     //Creation of the window
-    m_hwnd=::CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, L"MyWindowClass", L"Graphic Engine", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1024, 768,
+    m_hwnd=::CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, L"MyWindowClass", L"GraphiX", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1024, 768,
         NULL, NULL, NULL, NULL);
 
 
@@ -70,14 +74,28 @@ bool Window::init()
     ::ShowWindow(m_hwnd, SW_SHOW);
     ::UpdateWindow(m_hwnd);
 
-    if (!window)
-        window = this;
+    
+
+    //setting this flag as true to indicate that the window is initialized and running 
+    m_is_run = true;
 
     return true;
 }
 
 bool Window::broadcast()
 {
+    MSG msg;
+
+    while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    window->onUpdate();
+
+    Sleep(0);
+
     return true;
 }
 
@@ -89,6 +107,16 @@ bool Window::release()
         return false;
 
     return true;
+}
+
+bool Window::isRun()
+{
+    return m_is_run;
+}
+
+void Window::onDestroy()
+{
+    m_is_run = false;
 }
 
 Window::~Window()
